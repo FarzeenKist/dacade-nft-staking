@@ -14,46 +14,47 @@ async function main() {
   const maxMintAmount = 5
 
   // Deploy DacadePunks NFT contract 
-  const NFTContract = await ethers.getContractFactory("DacadePunks");
+  const NFTContract = await hre.ethers.getContractFactory("DacadePunks");
   const nftContract = await NFTContract.deploy(maxSupply, mintCost, maxMintAmount);
 
-  await nftContract.deployed();
+  await nftContract.waitForDeployment();
 
-  const set_tx = await nftContract.setBaseURI(baseURI)
-  await set_tx.wait()
+   const set_tx = await nftContract.setBaseURI(baseURI)
+   await set_tx.wait()
 
-  // Deploy DacadePunks ERC20 token contract 
-  const TokenContract = await ethers.getContractFactory("DacadePunksToken");
-  const tokenContract = await TokenContract.deploy();
+    // Deploy DacadePunks ERC20 token contract 
+   const TokenContract = await hre.ethers.getContractFactory("DacadePunksToken");
+   const tokenContract = await TokenContract.deploy();
 
-  await tokenContract.deployed();
+   await tokenContract.waitForDeployment();
 
-  // Deploy Vault contract 
-  const Vault = await ethers.getContractFactory("Vault");
-  const stakingVault = await Vault.deploy(nftContract.address, tokenContract.address);
+    // Deploy Vault contract 
+   const Vault = await hre.ethers.getContractFactory("Vault");
+   const stakingVault = await Vault.deploy(nftContract.target, tokenContract.target);
 
-  await stakingVault.deployed();
+   await stakingVault.waitForDeployment();
 
-  const control_tx = await tokenContract.setController(stakingVault.address, true)
-  await control_tx.wait()
+   const control_tx = await tokenContract.setController(stakingVault.target, true)
+   await control_tx.wait()
 
-  console.log("DacadePunks NFT contract deployed at:         ", nftContract.address);
-  console.log("DacadePunks ERC20 token contract deployed at: ", tokenContract.address);
-  console.log("NFT Staking Vault deployed at:                ", stakingVault.address);
-  console.log("Network deployed to:                          ", deployNetwork);
+   console.log("DacadePunks NFT contract deployed at:         ", nftContract.target);
+   console.log("DacadePunks ERC20 token contract deployed at: ", tokenContract.target);
+   console.log("NFT Staking Vault deployed at:                ", stakingVault.target);
+   console.log("Network deployed to:                          ", deployNetwork);
 
-  /* transfer contracts addresses & ABIs to the frontend */
-  if (fs.existsSync("../frontend/src")) {
-    fs.rmSync("../src/artifacts", { recursive: true, force: true });
-    fse.copySync("./artifacts/contracts", "../frontend/src/artifacts")
-    fs.writeFileSync("../frontend/src/utils/contracts-config.js", `
-      export const stakingContractAddress = "${stakingVault.address}"
-      export const nftContractAddress = "${nftContract.address}"
-      export const tokenContractAddress = "${tokenContract.address}"
-      export const ownerAddress = "${stakingVault.signer.address}"
+   /* transfer contracts addresses & ABIs to the frontend */
+   if (fs.existsSync("../frontend/src")) {
+     fs.rmSync("../src/artifacts", { recursive: true, force: true });
+     fse.copySync("./artifacts/contracts", "../frontend/src/artifacts")
+     fs.writeFileSync("../frontend/src/utils/contracts-config.js", 
+     `
+      export const stakingContractAddress = "${stakingVault.target}"
+      export const nftContractAddress = "${nftContract.target}"
+      export const tokenContractAddress = "${tokenContract.target}"
+      export const ownerAddress = "${stakingVault.runner.address}"
       export const networkDeployedTo = "${hre.network.config.chainId}"
-    `)
-  }
+     `)
+   }
 
 }
 

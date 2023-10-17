@@ -2,6 +2,7 @@ const hre = require("hardhat");
 import dotenv from "dotenv";
 dotenv.config();
 const PRIVATE_KEY = <string>process.env.PRIVATE_KEY;
+import { ethers } from "ethers";
 
 const abi = require("../artifacts/contracts/DacadePunks.sol/DacadePunks.json");
 
@@ -11,14 +12,14 @@ async function main() {
 
   const nftAddress = "0x15d37b4fe7d2c39446637C949b55e3f9Ccb87CBE";
 
-  const provider = new ethers.providers.JsonRpcProvider(rpc, chainId);
+  const provider = new ethers.JsonRpcProvider(rpc, chainId);
   const signer = new ethers.Wallet(PRIVATE_KEY, provider);
 
   const NFTContract = new ethers.Contract(nftAddress, abi.abi, signer);
 
   console.log('Activating...');
-  let tx = await NFTContract.connect(signer).pause(2);
-  await tx.wait();
+  let tx = await NFTContract.connect(signer);
+  console.log(tx)
 }
 
 
